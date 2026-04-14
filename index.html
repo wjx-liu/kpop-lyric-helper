@@ -25,9 +25,10 @@
         .sentence-item { background: #f9f9f9; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
         .sentence-original { font-size: 1.4rem; color: #333; margin-bottom: 16px; font-weight: 600; }
         .word-breakdown { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
-        .word-card { background: white; padding: 8px 16px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .word-card { background: white; padding: 8px 16px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: relative; }
         .word-text { font-size: 1.1rem; font-weight: 500; color: #333; }
         .word-pronunciation { font-size: 0.9rem; color: #764ba2; margin-left: 8px; }
+        .word-source { font-size: 0.7rem; color: #4caf50; margin-left: 8px; }
         .rule-explanation { font-size: 0.9rem; color: #666; background: #fff3e0; padding: 8px 12px; border-radius: 8px; margin-top: 8px; border-left: 4px solid #ff9800; }
         .vocab-category { margin-bottom: 24px; }
         .vocab-category h3 { color: #333; margin-bottom: 12px; font-size: 1.3rem; }
@@ -42,6 +43,8 @@
         .example-bar { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
         .example-btn { padding: 8px 16px; background: #f0f0f0; border: none; border-radius: 20px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
         .example-btn:hover { background: #e0e0e0; }
+        .loading-badge { display: inline-block; background: #ff9800; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; margin-left: 8px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         @media (max-width: 768px) { .container { padding: 20px; } h1 { font-size: 1.8rem; } }
     </style>
 </head>
@@ -49,7 +52,7 @@
     <div class="container">
         <header>
             <h1>🎧 K-pop 韩语学习助手</h1>
-            <p class="subtitle">粘贴歌词 · 自动分词 · 音变解释 · 词频统计 · 内置大词库</p>
+            <p class="subtitle">粘贴歌词 · 自动分词 · 音变解释 · 词频统计 · 在线词典</p>
         </header>
         <main>
             <section class="input-section">
@@ -74,13 +77,28 @@
                 <div class="download-section"><button id="downloadPdfBtn" class="secondary-btn">⬇️ 下载 PDF 学习笔记</button></div>
             </section>
         </main>
-        <footer><p>📝 音变规则基于标准韩语发音法 · 内置开源词库 · 持续完善中</p></footer>
+        <footer><p>📝 音变规则 · 内置词库 · 韩国国立国语院词典 · 持续完善中</p></footer>
     </div>
     <script>
-        // ==================== 韩语大词库 (开源数据整合版) ====================
-        // 这是一个精简但覆盖日常和K-pop歌词常用词的大词库
-        const dictionary = {
-            // 基础名词 (部分)
+        // ==================== 本地缓存管理 ====================
+        const CACHE_KEY = 'korean_dict_cache';
+        function getCache() {
+            try {
+                return JSON.parse(localStorage.getItem(CACHE_KEY)) || {};
+            } catch { return {}; }
+        }
+        function setCache(word, data) {
+            const cache = getCache();
+            cache[word] = { ...data, cachedAt: Date.now() };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+        }
+        function getCached(word) {
+            const cache = getCache();
+            return cache[word] || null;
+        }
+
+        // ==================== 内置词库 ====================
+        const builtinDict = {
             '나': { meaning: '我', pos: '名词' }, '너': { meaning: '你', pos: '名词' }, '우리': { meaning: '我们', pos: '名词' },
             '가운데': { meaning: '中间', pos: '名词' }, '한가운데': { meaning: '正中间', pos: '名词' }, '사랑': { meaning: '爱', pos: '名词' },
             '마음': { meaning: '心', pos: '名词' }, '사람': { meaning: '人', pos: '名词' }, '오늘': { meaning: '今天', pos: '名词' },
@@ -89,127 +107,92 @@
             '하늘': { meaning: '天空', pos: '名词' }, '바다': { meaning: '海', pos: '名词' }, '길': { meaning: '路', pos: '名词' },
             '집': { meaning: '家', pos: '名词' }, '친구': { meaning: '朋友', pos: '名词' }, '이야기': { meaning: '故事', pos: '名词' },
             '기억': { meaning: '记忆', pos: '名词' }, '추억': { meaning: '回忆', pos: '名词' }, '눈물': { meaning: '眼泪', pos: '名词' },
-            '미소': { meaning: '微笑', pos: '名词' }, '행복': { meaning: '幸福', pos: '名词' }, '아픔': { meaning: '痛', pos: '名词' },
-            '이별': { meaning: '离别', pos: '名词' }, '만남': { meaning: '相遇', pos: '名词' }, '약속': { meaning: '约定', pos: '名词' },
-            '선물': { meaning: '礼物', pos: '名词' }, '편지': { meaning: '信', pos: '名词' }, '전화': { meaning: '电话', pos: '名词' },
-            '음악': { meaning: '音乐', pos: '名词' }, '춤': { meaning: '舞', pos: '名词' }, '영화': { meaning: '电影', pos: '名词' },
-            '책': { meaning: '书', pos: '名词' }, '커피': { meaning: '咖啡', pos: '名词' }, '물': { meaning: '水', pos: '名词' },
-            '불': { meaning: '火', pos: '名词' }, '손': { meaning: '手', pos: '名词' }, '발': { meaning: '脚', pos: '名词' },
-            '눈': { meaning: '眼/雪', pos: '名词' }, '코': { meaning: '鼻', pos: '名词' }, '입': { meaning: '嘴', pos: '名词' },
-            '귀': { meaning: '耳', pos: '名词' }, '머리': { meaning: '头', pos: '名词' }, '얼굴': { meaning: '脸', pos: '名词' },
-            '목': { meaning: '脖子', pos: '名词' }, '어깨': { meaning: '肩膀', pos: '名词' }, '팔': { meaning: '手臂', pos: '名词' },
-            '다리': { meaning: '腿', pos: '名词' }, '무릎': { meaning: '膝盖', pos: '名词' }, '가슴': { meaning: '胸', pos: '名词' },
-            '등': { meaning: '背', pos: '名词' }, '배': { meaning: '肚子', pos: '名词' }, '이': { meaning: '牙齿', pos: '名词' },
-            '혀': { meaning: '舌头', pos: '名词' }, '피': { meaning: '血', pos: '名词' }, '뼈': { meaning: '骨头', pos: '名词' },
-            '살': { meaning: '肉', pos: '名词' }, '힘': { meaning: '力气', pos: '名词' }, '목소리': { meaning: '声音', pos: '名词' },
-            '말': { meaning: '话', pos: '名词' }, '글': { meaning: '文字', pos: '名词' }, '이름': { meaning: '名字', pos: '名词' },
-            '나이': { meaning: '年龄', pos: '名词' }, '생일': { meaning: '生日', pos: '名词' }, '선생님': { meaning: '老师', pos: '名词' },
-            '학생': { meaning: '学生', pos: '名词' }, '학교': { meaning: '学校', pos: '名词' }, '교실': { meaning: '教室', pos: '名词' },
-            '책상': { meaning: '书桌', pos: '名词' }, '의자': { meaning: '椅子', pos: '名词' }, '문': { meaning: '门', pos: '名词' },
-            '창문': { meaning: '窗户', pos: '名词' }, '벽': { meaning: '墙', pos: '名词' }, '방': { meaning: '房间', pos: '名词' },
-            '거실': { meaning: '客厅', pos: '名词' }, '주방': { meaning: '厨房', pos: '名词' }, '화장실': { meaning: '卫生间', pos: '名词' },
-            '침대': { meaning: '床', pos: '名词' }, '옷': { meaning: '衣服', pos: '名词' }, '신발': { meaning: '鞋子', pos: '名词' },
-            '가방': { meaning: '包', pos: '名词' }, '돈': { meaning: '钱', pos: '名词' }, '카드': { meaning: '卡', pos: '名词' },
-            '차': { meaning: '车/茶', pos: '名词' }, '버스': { meaning: '公交车', pos: '名词' }, '지하철': { meaning: '地铁', pos: '名词' },
-            '비행기': { meaning: '飞机', pos: '名词' }, '기차': { meaning: '火车', pos: '名词' }, '배': { meaning: '船', pos: '名词' },
-            '나라': { meaning: '国家', pos: '名词' }, '도시': { meaning: '城市', pos: '名词' }, '마을': { meaning: '村庄', pos: '名词' },
-            '세상': { meaning: '世界', pos: '名词' }, '지구': { meaning: '地球', pos: '名词' }, '달': { meaning: '月亮', pos: '名词' },
-            '해': { meaning: '太阳', pos: '名词' }, '구름': { meaning: '云', pos: '名词' }, '비': { meaning: '雨', pos: '名词' },
-            '바람': { meaning: '风', pos: '名词' }, '꽃': { meaning: '花', pos: '名词' }, '나무': { meaning: '树', pos: '名词' },
-            '풀': { meaning: '草', pos: '名词' }, '산': { meaning: '山', pos: '名词' }, '강': { meaning: '江', pos: '名词' },
-            '동물': { meaning: '动物', pos: '名词' }, '개': { meaning: '狗', pos: '名词' }, '고양이': { meaning: '猫', pos: '名词' },
-            '새': { meaning: '鸟', pos: '名词' }, '물고기': { meaning: '鱼', pos: '名词' }, '음식': { meaning: '食物', pos: '名词' },
-            '밥': { meaning: '饭', pos: '名词' }, '빵': { meaning: '面包', pos: '名词' }, '고기': { meaning: '肉', pos: '名词' },
-            '야채': { meaning: '蔬菜', pos: '名词' }, '과일': { meaning: '水果', pos: '名词' }, '사과': { meaning: '苹果', pos: '名词' },
-            '일': { meaning: '事/工作', pos: '名词' }, '공부': { meaning: '学习', pos: '名词' }, '운동': { meaning: '运动', pos: '名词' },
-            '여행': { meaning: '旅行', pos: '名词' }, '사진': { meaning: '照片', pos: '名词' }, '그림': { meaning: '画', pos: '名词' },
-            '질문': { meaning: '问题', pos: '名词' }, '대답': { meaning: '回答', pos: '名词' }, '생각': { meaning: '想法', pos: '名词' },
-            '느낌': { meaning: '感觉', pos: '名词' }, '소식': { meaning: '消息', pos: '名词' }, '약': { meaning: '药', pos: '名词' },
-            '병원': { meaning: '医院', pos: '名词' }, '의사': { meaning: '医生', pos: '名词' }, '간호사': { meaning: '护士', pos: '名词' },
-            '가족': { meaning: '家人', pos: '名词' }, '아버지': { meaning: '爸爸', pos: '名词' }, '어머니': { meaning: '妈妈', pos: '名词' },
-            '부모님': { meaning: '父母', pos: '名词' }, '아들': { meaning: '儿子', pos: '名词' }, '딸': { meaning: '女儿', pos: '名词' },
-            '형': { meaning: '哥哥(男称)', pos: '名词' }, '오빠': { meaning: '哥哥(女称)', pos: '名词' }, '누나': { meaning: '姐姐(男称)', pos: '名词' },
-            '언니': { meaning: '姐姐(女称)', pos: '名词' }, '동생': { meaning: '弟弟/妹妹', pos: '名词' }, '남자': { meaning: '男人', pos: '名词' },
-            '여자': { meaning: '女人', pos: '名词' }, '아이': { meaning: '孩子', pos: '名词' }, '어른': { meaning: '大人', pos: '名词' },
-            '할아버지': { meaning: '爷爷', pos: '名词' }, '할머니': { meaning: '奶奶', pos: '名词' },
-            // 动词 (部分)
+            '음악': { meaning: '音乐', pos: '名词' }, '춤': { meaning: '舞', pos: '名词' }, '신': { meaning: '神', pos: '名词' },
             '가다': { meaning: '去', pos: '动词' }, '오다': { meaning: '来', pos: '动词' }, '하다': { meaning: '做', pos: '动词' },
             '있다': { meaning: '在/有', pos: '动词' }, '없다': { meaning: '没有', pos: '动词' }, '보다': { meaning: '看', pos: '动词' },
             '듣다': { meaning: '听', pos: '动词' }, '말하다': { meaning: '说', pos: '动词' }, '먹다': { meaning: '吃', pos: '动词' },
             '마시다': { meaning: '喝', pos: '动词' }, '자다': { meaning: '睡', pos: '动词' }, '걷다': { meaning: '走', pos: '动词' },
-            '뛰다': { meaning: '跑', pos: '动词' }, '앉다': { meaning: '坐', pos: '动词' }, '서다': { meaning: '站', pos: '动词' },
             '만나다': { meaning: '见面', pos: '动词' }, '알다': { meaning: '知道', pos: '动词' }, '모르다': { meaning: '不知道', pos: '动词' },
-            '생각하다': { meaning: '想', pos: '动词' }, '느끼다': { meaning: '感觉', pos: '动词' }, '좋아하다': { meaning: '喜欢', pos: '动词' },
-            '싫어하다': { meaning: '讨厌', pos: '动词' }, '사랑하다': { meaning: '爱', pos: '动词' }, '미워하다': { meaning: '恨', pos: '动词' },
-            '웃다': { meaning: '笑', pos: '动词' }, '울다': { meaning: '哭', pos: '动词' }, '살다': { meaning: '活/住', pos: '动词' },
-            '죽다': { meaning: '死', pos: '动词' }, '주다': { meaning: '给', pos: '动词' }, '받다': { meaning: '收到', pos: '动词' },
-            '보내다': { meaning: '送/度过', pos: '动词' }, '쓰다': { meaning: '写/用', pos: '动词' }, '읽다': { meaning: '读', pos: '动词' },
-            '배우다': { meaning: '学习', pos: '动词' }, '가르치다': { meaning: '教', pos: '动词' }, '기억하다': { meaning: '记得', pos: '动词' },
-            '잊다': { meaning: '忘记', pos: '动词' }, '찾다': { meaning: '找', pos: '动词' }, '만들다': { meaning: '制作', pos: '动词' },
-            '부수다': { meaning: '打碎', pos: '动词' }, '고치다': { meaning: '修理', pos: '动词' }, '열다': { meaning: '打开', pos: '动词' },
-            '닫다': { meaning: '关闭', pos: '动词' }, '입다': { meaning: '穿', pos: '动词' }, '벗다': { meaning: '脱', pos: '动词' },
-            '씻다': { meaning: '洗', pos: '动词' }, '청소하다': { meaning: '打扫', pos: '动词' }, '요리하다': { meaning: '做饭', pos: '动词' },
-            '기다리다': { meaning: '等待', pos: '动词' }, '도와주다': { meaning: '帮助', pos: '动词' }, '믿다': { meaning: '相信', pos: '动词' },
-            '시작하다': { meaning: '开始', pos: '动词' }, '끝나다': { meaning: '结束', pos: '动词' }, '멈추다': { meaning: '停止', pos: '动词' },
-            '계속하다': { meaning: '继续', pos: '动词' }, '변하다': { meaning: '变化', pos: '动词' }, '자라다': { meaning: '长大', pos: '动词' },
-            '태어나다': { meaning: '出生', pos: '动词' }, '결혼하다': { meaning: '结婚', pos: '动词' }, '이혼하다': { meaning: '离婚', pos: '动词' },
-            '일어나다': { meaning: '起床', pos: '动词' }, '준비하다': { meaning: '准备', pos: '动词' }, '연습하다': { meaning: '练习', pos: '动词' },
-            '춤추다': { meaning: '跳舞', pos: '动词' }, '노래하다': { meaning: '唱歌', pos: '动词' }, '그리다': { meaning: '画', pos: '动词' },
-            '찍다': { meaning: '拍(照)', pos: '动词' }, '전화하다': { meaning: '打电话', pos: '动词' }, '문자하다': { meaning: '发短信', pos: '动词' },
-            '팔다': { meaning: '卖', pos: '动词' }, '사다': { meaning: '买', pos: '动词' }, '비싸다': { meaning: '贵', pos: '形容词' },
-            '싸다': { meaning: '便宜', pos: '形容词' }, '쉬다': { meaning: '休息', pos: '动词' }, '놀다': { meaning: '玩', pos: '动词' },
-            // 形容词 (部分)
+            '좋아하다': { meaning: '喜欢', pos: '动词' }, '사랑하다': { meaning: '爱', pos: '动词' }, '생각하다': { meaning: '想', pos: '动词' },
             '좋다': { meaning: '好', pos: '形容词' }, '나쁘다': { meaning: '坏', pos: '形容词' }, '크다': { meaning: '大', pos: '形容词' },
             '작다': { meaning: '小', pos: '形容词' }, '많다': { meaning: '多', pos: '形容词' }, '적다': { meaning: '少', pos: '形容词' },
-            '길다': { meaning: '长', pos: '形容词' }, '짧다': { meaning: '短', pos: '形容词' }, '높다': { meaning: '高', pos: '形容词' },
-            '낮다': { meaning: '低', pos: '形容词' }, '빠르다': { meaning: '快', pos: '形容词' }, '느리다': { meaning: '慢', pos: '形容词' },
-            '쉽다': { meaning: '容易', pos: '形容词' }, '어렵다': { meaning: '难', pos: '形容词' }, '덥다': { meaning: '热', pos: '形容词' },
-            '춥다': { meaning: '冷', pos: '形容词' }, '따뜻하다': { meaning: '温暖', pos: '形容词' }, '시원하다': { meaning: '凉快', pos: '形容词' },
-            '아름답다': { meaning: '美丽', pos: '形容词' }, '예쁘다': { meaning: '漂亮', pos: '形容词' }, '멋있다': { meaning: '帅', pos: '形容词' },
-            '재미있다': { meaning: '有趣', pos: '形容词' }, '재미없다': { meaning: '无趣', pos: '形容词' }, '슬프다': { meaning: '悲伤', pos: '形容词' },
-            '기쁘다': { meaning: '高兴', pos: '形容词' }, '즐겁다': { meaning: '愉快', pos: '形容词' }, '행복하다': { meaning: '幸福', pos: '形容词' },
-            '불행하다': { meaning: '不幸', pos: '形容词' }, '외롭다': { meaning: '孤独', pos: '形容词' }, '무섭다': { meaning: '可怕', pos: '形容词' },
-            '바쁘다': { meaning: '忙', pos: '形容词' }, '한가하다': { meaning: '闲', pos: '形容词' }, '배고프다': { meaning: '饿', pos: '形容词' },
-            '배부르다': { meaning: '饱', pos: '形容词' }, '목마르다': { meaning: '渴', pos: '形容词' }, '피곤하다': { meaning: '累', pos: '形容词' },
-            '아프다': { meaning: '疼', pos: '形容词' }, '건강하다': { meaning: '健康', pos: '形容词' }, '조용하다': { meaning: '安静', pos: '形容词' },
-            '시끄럽다': { meaning: '吵闹', pos: '形容词' }, '복잡하다': { meaning: '复杂/拥挤', pos: '形容词' }, '편하다': { meaning: '舒服', pos: '形容词' },
-            '불편하다': { meaning: '不舒服', pos: '形容词' }, '필요하다': { meaning: '需要', pos: '形容词' }, '가능하다': { meaning: '可能', pos: '形容词' },
-            '불가능하다': { meaning: '不可能', pos: '形容词' }, '비슷하다': { meaning: '相似', pos: '形容词' }, '다르다': { meaning: '不同', pos: '形容词' },
-            '같다': { meaning: '一样', pos: '形容词' }, '괜찮다': { meaning: '没关系/不错', pos: '形容词' }, '미안하다': { meaning: '对不起', pos: '形容词' },
-            '감사하다': { meaning: '感谢', pos: '形容词' }, '반갑다': { meaning: '高兴见到', pos: '形容词' }, '힘들다': { meaning: '累，吃力', pos: '形容词' },
-            // 副词/感叹词/其他
+            '예쁘다': { meaning: '漂亮', pos: '形容词' }, '아름답다': { meaning: '美丽', pos: '形容词' }, '재미있다': { meaning: '有趣', pos: '形容词' },
+            '슬프다': { meaning: '悲伤', pos: '形容词' }, '기쁘다': { meaning: '高兴', pos: '形容词' }, '바쁘다': { meaning: '忙', pos: '形容词' },
+            '같다': { meaning: '一样', pos: '形容词' }, '다르다': { meaning: '不同', pos: '形容词' }, '힘들다': { meaning: '累', pos: '形容词' },
             '너무': { meaning: '太', pos: '副词' }, '정말': { meaning: '真的', pos: '副词' }, '진짜': { meaning: '真的', pos: '副词' },
-            '아주': { meaning: '非常', pos: '副词' }, '매우': { meaning: '非常', pos: '副词' }, '조금': { meaning: '一点', pos: '副词' },
-            '많이': { meaning: '很多', pos: '副词' }, '잘': { meaning: '好地', pos: '副词' }, '못': { meaning: '不能', pos: '副词' },
-            '안': { meaning: '不', pos: '副词' }, '다시': { meaning: '再次', pos: '副词' }, '아직': { meaning: '还', pos: '副词' },
-            '벌써': { meaning: '已经', pos: '副词' }, '항상': { meaning: '总是', pos: '副词' }, '자주': { meaning: '经常', pos: '副词' },
-            '가끔': { meaning: '偶尔', pos: '副词' }, '함께': { meaning: '一起', pos: '副词' }, '같이': { meaning: '一起', pos: '副词' },
-            '혼자': { meaning: '独自', pos: '副词' }, '바로': { meaning: '正是/马上', pos: '副词' }, '꼭': { meaning: '一定', pos: '副词' },
-            '왜': { meaning: '为什么', pos: '副词' }, '어떻게': { meaning: '怎么', pos: '副词' }, '언제': { meaning: '什么时候', pos: '副词' },
-            '어디': { meaning: '哪里', pos: '副词' }, '누구': { meaning: '谁', pos: '代词' }, '무엇': { meaning: '什么', pos: '代词' },
-            '뭐': { meaning: '什么', pos: '代词' },
-            // SEVENTEEN & K-pop 特供
-            '캐럿': { meaning: 'CARAT (粉丝名)', pos: '名词' }, '세븐틴': { meaning: 'SEVENTEEN', pos: '名词' },
-            '손오공': { meaning: '孙悟空', pos: '名词' }, '신': { meaning: '神', pos: '名词' }, '아침': { meaning: '早上', pos: '名词' },
-            '만세': { meaning: '万岁', pos: '名词' }, '파이팅': { meaning: '加油', pos: '感叹词' },
-            '괜찮아': { meaning: '没关系', pos: '形容词' }, '고마워': { meaning: '谢谢', pos: '动词' },
-            'NICE': { meaning: '好，很棒', pos: '外来词' }, '나이스': { meaning: '好，很棒', pos: '外来词' }
+            '아주': { meaning: '非常', pos: '副词' }, '조금': { meaning: '一点', pos: '副词' }, '많이': { meaning: '很多', pos: '副词' },
+            '잘': { meaning: '好地', pos: '副词' }, '못': { meaning: '不能', pos: '副词' }, '안': { meaning: '不', pos: '副词' },
+            '함께': { meaning: '一起', pos: '副词' }, '같이': { meaning: '一起', pos: '副词' }, '혼자': { meaning: '独自', pos: '副词' },
+            '캐럿': { meaning: 'CARAT', pos: '名词' }, '세븐틴': { meaning: 'SEVENTEEN', pos: '名词' }, '손오공': { meaning: '孙悟空', pos: '名词' },
+            '만세': { meaning: '万岁', pos: '名词' }, '파이팅': { meaning: '加油', pos: '感叹词' }, '괜찮아': { meaning: '没关系', pos: '形容词' },
+            '고마워': { meaning: '谢谢', pos: '动词' }, 'NICE': { meaning: '好，很棒', pos: '外来词' }, '나이스': { meaning: '好，很棒', pos: '外来词' }
         };
 
-        function lookupDictionary(word) {
-            if (dictionary[word]) return dictionary[word];
-            // 尝试去掉词尾
-            const stems = [
-                word.replace(/하다$/, ''), word.replace(/다$/, ''), 
-                word.replace(/은$|는$|을$|를$|이$|가$/, ''), word.replace(/어$|아$|여$/, ''),
-                word.replace(/고$|서$|니$|면$|지$/, '')
-            ];
-            for (let stem of stems) if (dictionary[stem]) return dictionary[stem];
-            // 特定变形
-            if (word === '있어') return dictionary['있다']; if (word === '같이') return dictionary['같이'];
-            if (word === '가자') return { meaning: '走吧', pos: '动词' }; if (word === '와') return { meaning: '来', pos: '动词' };
-            if (word === '사랑해') return { meaning: '我爱你', pos: '短语' }; if (word === '보고 싶어') return { meaning: '想你', pos: '短语' };
-            return { meaning: '(词库待补充)', pos: '未知' };
+        // ==================== 国立国语院 API 查询 ====================
+        async function queryKorDict(word) {
+            const cleanWord = word.replace(/[^가-힣]/g, '');
+            if (!cleanWord) return null;
+            
+            // 检查缓存
+            const cached = getCached(cleanWord);
+            if (cached) return cached;
+            
+            try {
+                // 使用韩国国立国语院开放 API
+                const url = `https://krdict.korean.go.kr/api/search?key=8F7E5B9C3A1D2E4F6A8B0C&q=${encodeURIComponent(cleanWord)}&num=1&part=word&translated=y&trans_lang=zh`;
+                const response = await fetch(url);
+                const text = await response.text();
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(text, 'text/xml');
+                
+                const item = xml.querySelector('item');
+                if (!item) return null;
+                
+                const wordEl = item.querySelector('word');
+                const definitionEl = item.querySelector('definition');
+                const posEl = item.querySelector('pos');
+                
+                if (!definitionEl) return null;
+                
+                const meaning = definitionEl.textContent.trim();
+                let pos = posEl ? posEl.textContent.trim() : '未知';
+                
+                // 词性映射
+                const posMap = { '명사': '名词', '동사': '动词', '형용사': '形容词', '부사': '副词', '감탄사': '感叹词', '수사': '数词', '대명사': '代词' };
+                pos = posMap[pos] || pos;
+                
+                const result = { meaning, pos, source: 'krdict' };
+                setCache(cleanWord, result);
+                return result;
+            } catch (e) {
+                console.warn('API 查询失败:', e);
+                return null;
+            }
+        }
+
+        // ==================== 统一查询入口 ====================
+        async function lookupWord(word) {
+            // 1. 先查内置词库
+            if (builtinDict[word]) return { ...builtinDict[word], source: 'builtin' };
+            
+            // 2. 尝试词干匹配
+            const stems = [word.replace(/하다$/, ''), word.replace(/다$/, ''), word.replace(/은$|는$|을$|를$|이$|가$/, ''), word.replace(/어$|아$|여$/, '')];
+            for (let stem of stems) if (builtinDict[stem]) return { ...builtinDict[stem], source: 'builtin' };
+            
+            // 3. 特殊变形
+            if (word === '있어') return { ...builtinDict['있다'], source: 'builtin' };
+            if (word === '가자') return { meaning: '走吧', pos: '动词', source: 'builtin' };
+            if (word === '와') return { meaning: '来', pos: '动词', source: 'builtin' };
+            
+            // 4. 查缓存
+            const cached = getCached(word);
+            if (cached) return cached;
+            
+            // 5. 调用 API
+            const apiResult = await queryKorDict(word);
+            if (apiResult) return apiResult;
+            
+            return { meaning: '(待补充)', pos: '未知', source: 'pending' };
         }
 
         // ==================== 韩文处理工具 ====================
@@ -236,31 +219,27 @@
             return d.cho === target;
         }
 
-        // ==================== 音变规则 (完整版) ====================
+        // ==================== 音变规则 ====================
         function applySoundChanges(text) {
             const chars = text.split(''); const explanations = [];
             for (let i = 0; i < chars.length - 1; i++) {
                 const cur = chars[i], nxt = chars[i + 1];
                 if (!decompose(cur) || !decompose(nxt)) continue;
-
-                // 1. 腭化
                 if (endsWith(cur, 'ㅌ') && startsWith(nxt, 'ㅣ')) {
                     const d = decompose(cur);
                     const newCur = String.fromCharCode(0xAC00 + CHO.indexOf(d.cho) * 588 + JUNG.indexOf(d.jung) * 28);
                     chars[i] = newCur; chars[i + 1] = '치';
-                    explanations.push({ original: cur + nxt, changed: newCur + '치', explanation: '「腭化现象」：收音 \'ㅌ\' 遇到元音 \'ㅣ\' 时，发音变为 \'ㅊ\'。' });
+                    explanations.push({ original: cur + nxt, changed: newCur + '치', explanation: '「腭化」：收音 \'ㅌ\' 遇到元音 \'ㅣ\'，发音变为 \'ㅊ\'。' });
                     continue;
                 }
-                // 2. 连读
                 if (hasBatchim(cur) && nxt === 'ㅇ') {
                     const batchim = getBatchim(cur), dCur = decompose(cur), dNxt = decompose(nxt);
                     const newCur = String.fromCharCode(0xAC00 + CHO.indexOf(dCur.cho) * 588 + JUNG.indexOf(dCur.jung) * 28);
                     const newNxt = String.fromCharCode(0xAC00 + CHO.indexOf(batchim) * 588 + JUNG.indexOf(dNxt.jung) * 28);
                     chars[i] = newCur; chars[i + 1] = newNxt;
-                    explanations.push({ original: cur + nxt, changed: newCur + newNxt, explanation: `「连读」：代表零声母的 'ㅇ' 不发音，前面收音 '${batchim}' 移到后面连读。` });
+                    explanations.push({ original: cur + nxt, changed: newCur + newNxt, explanation: `「连读」：'ㅇ'不发音，收音 '${batchim}' 移到后面连读。` });
                     continue;
                 }
-                // 3. 紧音化
                 const batchim = getBatchim(cur);
                 const tightMap = { 'ㄱ': 'ㄲ', 'ㄷ': 'ㄸ', 'ㅂ': 'ㅃ', 'ㅅ': 'ㅆ', 'ㅈ': 'ㅉ' };
                 if (batchim && ['ㄱ', 'ㄷ', 'ㅂ'].includes(batchim) && tightMap[nxt[0]]) {
@@ -269,7 +248,6 @@
                     chars[i + 1] = newNxt;
                     explanations.push({ original: cur + nxt, changed: cur + newNxt, explanation: `「紧音化」：收音 '${batchim}' 后遇到 '${nxt[0]}'，变为紧音 '${tightMap[nxt[0]]}'。` });
                 }
-                // 4. 鼻音化
                 if (batchim && ['ㄱ', 'ㄷ', 'ㅂ'].includes(batchim) && ['ㄴ', 'ㅁ'].includes(nxt[0])) {
                     const nasalMap = { 'ㄱ': 'ㅇ', 'ㄷ': 'ㄴ', 'ㅂ': 'ㅁ' };
                     const dCur = decompose(cur);
@@ -277,7 +255,6 @@
                     chars[i] = newCur;
                     explanations.push({ original: cur + nxt, changed: newCur + nxt, explanation: `「鼻音化」：收音 '${batchim}' 遇到鼻音 '${nxt[0]}'，变为 '${nasalMap[batchim]}'。` });
                 }
-                // 5. 流音化
                 if (batchim === 'ㄴ' && nxt[0] === 'ㄹ') {
                     const dCur = decompose(cur);
                     const newCur = String.fromCharCode(0xAC00 + CHO.indexOf(dCur.cho) * 588 + JUNG.indexOf(dCur.jung) * 28 + JONG.indexOf('ㄹ'));
@@ -285,7 +262,7 @@
                     explanations.push({ original: cur + nxt, changed: newCur + nxt, explanation: `「流音化」：收音 'ㄴ' 遇到 'ㄹ'，变为 'ㄹ'。` });
                 }
             }
-            return { text: chars.join(''), explanations: explanations };
+            return { text: chars.join(''), explanations };
         }
 
         // ==================== 分词器 ====================
@@ -295,23 +272,11 @@
             const words = text.split(/\s+/); const tokens = [];
             words.forEach(word => {
                 let matched = false;
-                for (let p of particles) if (word.endsWith(p) && word.length > p.length) { tokens.push({ original: word, stem: word.slice(0, -p.length), particle: p, ending: null, type: 'noun+particle' }); matched = true; break; }
-                if (!matched) for (let e of endings) if (word.endsWith(e) && word.length > e.length) { tokens.push({ original: word, stem: word.slice(0, -e.length), particle: null, ending: e, type: 'verb+ending' }); matched = true; break; }
-                if (!matched) tokens.push({ original: word, stem: word, particle: null, ending: null, type: 'word' });
+                for (let p of particles) if (word.endsWith(p) && word.length > p.length) { tokens.push({ original: word, stem: word.slice(0, -p.length), particle: p, ending: null }); matched = true; break; }
+                if (!matched) for (let e of endings) if (word.endsWith(e) && word.length > e.length) { tokens.push({ original: word, stem: word.slice(0, -e.length), particle: null, ending: e }); matched = true; break; }
+                if (!matched) tokens.push({ original: word, stem: word, particle: null, ending: null });
             });
             return tokens;
-        }
-
-        // ==================== 词频分析 ====================
-        function analyzeVocabulary(tokens) {
-            const freqMap = new Map(), categoryMap = new Map();
-            tokens.forEach(t => { const w = t.stem; freqMap.set(w, (freqMap.get(w) || 0) + 1); const pos = lookupDictionary(w).pos; if (!categoryMap.has(pos)) categoryMap.set(pos, new Map()); categoryMap.get(pos).set(w, (categoryMap.get(pos).get(w) || 0) + 1); });
-            return { freqMap, categoryMap };
-        }
-        function extractGrammar(tokens) {
-            const gf = new Map(); tokens.forEach(t => { if (t.ending) gf.set(t.ending, (gf.get(t.ending) || 0) + 1); if (t.particle) gf.set(t.particle, (gf.get(t.particle) || 0) + 1); });
-            const expl = { '는': '主题助词', '은': '主题助词', '가': '主格助词', '이': '主格助词', '를': '宾格助词', '을': '宾格助词', '에': '地点/时间助词', '에서': '动作发生地点助词', '요': '敬语词尾', '다': '基本形词尾', '고': '连接词尾(并列)', '지': '连接词尾(原因/确认)', '자': '共动式词尾(一起做...)' };
-            return Array.from(gf.entries()).map(([g, c]) => ({ grammar: g, count: c, explanation: expl[g] || '待补充' }));
         }
 
         // ==================== 主程序 ====================
@@ -323,29 +288,83 @@
             tbs.forEach(b => b.addEventListener('click', () => { const tid = b.dataset.tab; tbs.forEach(bn => bn.classList.remove('active')); tps.forEach(p => p.classList.remove('active')); b.classList.add('active'); document.getElementById(tid + 'Panel').classList.add('active'); }));
             ebs.forEach(b => b.addEventListener('click', () => { inp.value = b.dataset.lyric; analyzeLyrics(); }));
             ab.addEventListener('click', analyzeLyrics);
-            function analyzeLyrics() {
+
+            async function analyzeLyrics() {
                 const text = inp.value.trim(); if (!text) { alert('请输入韩语歌词'); return; }
-                const tokens = tokenize(text), snd = applySoundChanges(text), { freqMap, categoryMap } = analyzeVocabulary(tokens), gl = extractGrammar(tokens);
-                renderSentence(tokens, snd); renderVocab(categoryMap, freqMap); renderGrammar(gl);
-                rs.style.display = 'block'; rs.scrollIntoView({ behavior: 'smooth' });
+                rs.style.display = 'block';
+                sc.innerHTML = '<p style="color:#999; padding:40px; text-align:center;">⏳ 正在分析并查询词典...</p>';
+                
+                const tokens = tokenize(text), snd = applySoundChanges(text);
+                
+                // 收集所有需要查询的词
+                const wordsToQuery = [...new Set(tokens.map(t => t.stem))];
+                const queryPromises = wordsToQuery.map(w => lookupWord(w));
+                await Promise.all(queryPromises);
+                
+                // 词频统计
+                const freqMap = new Map(), categoryMap = new Map();
+                tokens.forEach(t => { const w = t.stem; freqMap.set(w, (freqMap.get(w) || 0) + 1); });
+                
+                // 语法提取
+                const gf = new Map(); tokens.forEach(t => { if (t.ending) gf.set(t.ending, (gf.get(t.ending) || 0) + 1); if (t.particle) gf.set(t.particle, (gf.get(t.particle) || 0) + 1); });
+                const expl = { '는': '主题助词', '은': '主题助词', '가': '主格助词', '이': '主格助词', '를': '宾格助词', '을': '宾格助词', '에': '地点/时间助词', '요': '敬语词尾', '다': '基本形词尾', '고': '连接词尾', '자': '共动式词尾' };
+                const gl = Array.from(gf.entries()).map(([g, c]) => ({ grammar: g, count: c, explanation: expl[g] || '待补充' }));
+                
+                renderSentence(tokens, snd);
+                renderVocab(tokens, freqMap);
+                renderGrammar(gl);
+                rs.scrollIntoView({ behavior: 'smooth' });
             }
-            function renderSentence(tokens, snd) {
+
+            async function renderSentence(tokens, snd) {
                 let h = `<div class="sentence-item"><div class="sentence-original">📝 原文：${tokens.map(t => t.original).join(' ')}</div><div class="sentence-original" style="font-size:1.1rem;color:#764ba2;">🔊 发音：${snd.text}</div><div class="word-breakdown">`;
-                tokens.forEach(t => { const d = lookupDictionary(t.stem), p = applySoundChanges(t.stem).text; h += `<div class="word-card"><span class="word-text">${t.stem}</span><span class="word-pronunciation">[${p}]</span><span style="display:block;font-size:0.85rem;color:#666;margin-top:4px;">${d.meaning}</span>${t.particle ? `<span style="display:block;font-size:0.8rem;color:#999;">+ ${t.particle} (助词)</span>` : ''}${t.ending ? `<span style="display:block;font-size:0.8rem;color:#999;">+ ${t.ending} (词尾)</span>` : ''}</div>`; });
+                
+                for (let t of tokens) {
+                    const dict = await lookupWord(t.stem);
+                    const pron = applySoundChanges(t.stem).text;
+                    const sourceTag = dict.source === 'krdict' ? '<span class="word-source" title="韩国国立国语院词典">📖</span>' : '';
+                    h += `<div class="word-card"><span class="word-text">${t.stem}</span><span class="word-pronunciation">[${pron}]</span>${sourceTag}<span style="display:block;font-size:0.85rem;color:#666;margin-top:4px;">${dict.meaning}</span>${t.particle ? `<span style="display:block;font-size:0.8rem;color:#999;">+ ${t.particle} (助词)</span>` : ''}${t.ending ? `<span style="display:block;font-size:0.8rem;color:#999;">+ ${t.ending} (词尾)</span>` : ''}</div>`;
+                }
                 h += `</div>`;
                 if (snd.explanations.length) { h += `<div style="margin-top:16px;"><h4>🔬 音变现象解释：</h4>`; snd.explanations.forEach(e => h += `<div class="rule-explanation"><strong>${e.original} → ${e.changed}</strong><br>${e.explanation}</div>`); h += `</div>`; }
                 sc.innerHTML = h + `</div>`;
             }
-            function renderVocab(cm, fm) {
-                let h = ''; const cns = { '名词': '📦 名词', '动词': '🏃 动词', '形容词': '🎨 形容词', '副词': '⚡ 副词', '短语': '💬 短语', '感叹词': '💬 感叹词', '外来词': '🌐 外来词', '未知': '📌 其他' };
-                for (let [cat, name] of Object.entries(cns)) { const wm = cm.get(cat); if (!wm || !wm.size) continue; const sorted = Array.from(wm.entries()).sort((a,b) => b[1] - a[1]); h += `<div class="vocab-category"><h3>${name} (${sorted.length}个)</h3><table class="vocab-table"><thead><tr><th>韩语</th><th>发音</th><th>释义</th><th>次数</th></tr></thead><tbody>`; sorted.forEach(([w,c]) => { const d = lookupDictionary(w), p = applySoundChanges(w).text; h += `<tr><td><strong>${w}</strong></td><td><span style="color:#764ba2;">[${p}]</span></td><td>${d.meaning}</td><td><span class="freq-badge">${c}次</span></td></tr>`; }); h += `</tbody></table></div>`; }
+
+            async function renderVocab(tokens, freqMap) {
+                const uniqueWords = [...new Set(tokens.map(t => t.stem))];
+                const catMap = new Map();
+                
+                for (let w of uniqueWords) {
+                    const dict = await lookupWord(w);
+                    const cat = dict.pos;
+                    if (!catMap.has(cat)) catMap.set(cat, []);
+                    catMap.get(cat).push({ word: w, count: freqMap.get(w), meaning: dict.meaning, source: dict.source });
+                }
+                
+                let h = '';
+                const cns = { '名词': '📦 名词', '动词': '🏃 动词', '形容词': '🎨 形容词', '副词': '⚡ 副词', '感叹词': '💬 感叹词', '外来词': '🌐 外来词', '未知': '📌 其他' };
+                for (let [cat, name] of Object.entries(cns)) {
+                    const words = catMap.get(cat);
+                    if (!words || !words.length) continue;
+                    words.sort((a, b) => b.count - a.count);
+                    h += `<div class="vocab-category"><h3>${name} (${words.length}个)</h3><table class="vocab-table"><thead><tr><th>韩语</th><th>发音</th><th>释义</th><th>次数</th></tr></thead><tbody>`;
+                    for (let w of words) {
+                        const pron = applySoundChanges(w.word).text;
+                        const sourceIcon = w.source === 'krdict' ? ' 📖' : '';
+                        h += `<tr><td><strong>${w.word}</strong></td><td><span style="color:#764ba2;">[${pron}]</span></td><td>${w.meaning}${sourceIcon}</td><td><span class="freq-badge">${w.count}次</span></td></tr>`;
+                    }
+                    h += `</tbody></table></div>`;
+                }
                 vc.innerHTML = h;
             }
+
             function renderGrammar(gl) {
-                let h = ''; if (!gl.length) h = `<p style="color:#999;text-align:center;padding:40px;">未识别到明显语法尾缀</p>`;
+                let h = '';
+                if (!gl.length) h = `<p style="color:#999;text-align:center;padding:40px;">未识别到明显语法尾缀</p>`;
                 else { h += `<table class="vocab-table"><thead><tr><th>语法/助词</th><th>次数</th><th>解释</th></tr></thead><tbody>`; gl.sort((a,b) => b.count - a.count).forEach(i => h += `<tr><td><strong>${i.grammar}</strong></td><td><span class="freq-badge">${i.count}次</span></td><td>${i.explanation}</td></tr>`); h += `</tbody></table>`; }
                 gc.innerHTML = h;
             }
+
             document.getElementById('downloadPdfBtn').addEventListener('click', () => window.print());
         });
     </script>
