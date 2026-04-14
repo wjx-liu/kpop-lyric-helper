@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>🎧 K-pop 韩语学习助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            padding: 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 16px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            resize: vertical;
+            font-family: inherit;
+            margin-bottom: 16px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-weight: 500;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .sentence-item {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .sentence-original {
+            font-size: 1.4rem;
+            color: #333;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .word-breakdown {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .word-card {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .word-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .word-pronunciation {
+            font-size: 0.9rem;
+            color: #764ba2;
+            margin-left: 8px;
+        }
+
+        .rule-explanation {
+            font-size: 0.9rem;
+            color: #666;
+            background: #fff3e0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .vocab-category {
+            margin-bottom: 24px;
+        }
+
+        .vocab-category h3 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 1.3rem;
+        }
+
+        .vocab-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .vocab-table th {
+            text-align: left;
+            padding: 12px 8px;
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .vocab-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .freq-badge {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
+
+        .download-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .secondary-btn {
+            padding: 14px 32px;
+            font-size: 16px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .secondary-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .example-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .example-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .example-btn:hover {
+            background: #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎧 K-pop 韩语学习助手</h1>
+            <p class="subtitle">粘贴歌词 · 自动分词 · 音变解释 · 词频统计</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <div class="example-bar">
+                    <button class="example-btn" data-lyric="같이 가자 한가운데 있어">🎵 Ditto - NewJeans</button>
+                    <button class="example-btn" data-lyric="내 마음에 들어와">🎵 Hype Boy - NewJeans</button>
+                    <button class="example-btn" data-lyric="너의 attention 날 바라봐">🎵 Attention - NewJeans</button>
+                    <button class="example-btn" data-lyric="나는 너무 예뻐요">🎵 OMG - NewJeans</button>
+                </div>
+                <textarea id="lyricsInput" placeholder="在此粘贴韩语歌词...&#10;例如：같이 가자 한가운데 있어">같이 가자 한가운데 있어</textarea>
+                <button id="analyzeBtn" class="primary-btn">✨ 分析歌词</button>
+            </section>
+
+            <section id="resultsSection" class="results-section" style="display: none;">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="sentence">📖 逐句精读</button>
+                    <button class="tab-btn" data-tab="vocabulary">📚 词汇分类本</button>
+                    <button class="tab-btn" data-tab="grammar">🔗 语法尾缀</button>
+                </div>
+
+                <div id="sentencePanel" class="tab-panel active">
+                    <div id="sentenceContent" class="sentence-content"></div>
+                </div>
+
+                <div id="vocabularyPanel" class="tab-panel">
+                    <div id="vocabularyContent" class="vocabulary-content"></div>
+                </div>
+
+                <div id="grammarPanel" class="tab-panel">
+                    <div id="grammarContent" class="grammar-content"></div>
+                </div>
+
+                <div class="download-section">
+                    <button id="downloadPdfBtn" class="secondary-btn">⬇️ 下载 PDF 学习笔记</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>📝 音变规则基于标准韩语发音法 · 词库持续完善中</p>
+        </footer>
+    </div>
+
+    <script>
+        // ==================== 韩语词典 ====================
+        const dictionary = {
+            '나': { meaning: '我', pos: '名词' },
+            '너': { meaning: '你', pos: '名词' },
+            '우리': { meaning: '我们', pos: '名词' },
+            '가운데': { meaning: '中间', pos: '名词' },
+            '한가운데': { meaning: '正中间', pos: '名词' },
+            '사랑': { meaning: '爱', pos: '名词' },
+            '마음': { meaning: '心', pos: '名词' },
+            '사람': { meaning: '人', pos: '名词' },
+            '오늘': { meaning: '今天', pos: '名词' },
+            '내일': { meaning: '明天', pos: '名词' },
+            '시간': { meaning: '时间', pos: '名词' },
+            '노래': { meaning: '歌', pos: '名词' },
+            '꿈': { meaning: '梦', pos: '名词' },
+            '밤': { meaning: '夜晚', pos: '名词' },
+            '별': { meaning: '星星', pos: '名词' },
+            '하늘': { meaning: '天空', pos: '名词' },
+            '바다': { meaning: '海', pos: '名词' },
+            '길': { meaning: '路', pos: '名词' },
+            '집': { meaning: '家', pos: '名词' },
+            '친구': { meaning: '朋友', pos: '名词' },
+            '이야기': { meaning: '故事', pos: '名词' },
+            '기억': { meaning: '记忆', pos: '名词' },
+            '추억': { meaning: '回忆', pos: '名词' },
+            '눈물': { meaning: '眼泪', pos: '名词' },
+            '미소': { meaning: '微笑', pos: '名词' },
+            '행복': { meaning: '幸福', pos: '名词' },
+            '아픔': { meaning: '痛', pos: '名词' },
+            '이별': { meaning: '离别', pos: '名词' },
+            '만남': { meaning: '相遇', pos: '名词' },
+            '약속': { meaning: '约定', pos: '名词' },
+            '선물': { meaning: '礼物', pos: '名词' },
+            '편지': { meaning: '信', pos: '名词' },
+            '전화': { meaning: '电话', pos: '名词' },
+            '음악': { meaning: '音乐', pos: '名词' },
+            '춤': { meaning: '舞', pos: '名词' },
+            '영화': { meaning: '电影', pos: '名词' },
+            '책': { meaning: '书', pos: '名词' },
+            '커피': { meaning: '咖啡', pos: '名词' },
+            '가다': { meaning: '去', pos: '动词' },
+            '오다': { meaning: '来', pos: '动词' },
+            '하다': { meaning: '做', pos: '动词' },
+            '있다': { meaning: '在/有', pos: '动词' },
+            '없다': { meaning: '没有', pos: '动词' },
+            '보다': { meaning: '看', pos: '动词' },
+            '듣다': { meaning: '听', pos: '动词' },
+            '말하다': { meaning: '说', pos: '动词' },
+            '먹다': { meaning: '吃', pos: '动词' },
+            '마시다': { meaning: '喝', pos: '动词' },
+            '자다': { meaning: '睡', pos: '动词' },
+            '걷다': { meaning: '走', pos: '动词' },
+            '만나다': { meaning: '见面', pos: '动词' },
+            '알다': { meaning: '知道', pos: '动词' },
+            '모르다': { meaning: '不知道', pos: '动词' },
+            '생각하다': { meaning: '想', pos: '动词' },
+            '좋아하다': { meaning: '喜欢', pos: '动词' },
+            '사랑하다': { meaning: '爱', pos: '动词' },
+            '웃다': { meaning: '笑', pos: '动词' },
+            '울다': { meaning: '哭', pos: '动词' },
+            '살다': { meaning: '活/住', pos: '动词' },
+            '주다': { meaning: '给', pos: '动词' },
+            '받다': { meaning: '收到', pos: '动词' },
+            '보내다': { meaning: '送/度过', pos: '动词' },
+            '쓰다': { meaning: '写/用', pos: '动词' },
+            '읽다': { meaning: '读', pos: '动词' },
+            '배우다': { meaning: '学习', pos: '动词' },
+            '기억하다': { meaning: '记得', pos: '动词' },
+            '잊다': { meaning: '忘记', pos: '动词' },
+            '찾다': { meaning: '找', pos: '动词' },
+            '만들다': { meaning: '制作', pos: '动词' },
+            '시작하다': { meaning: '开始', pos: '动词' },
+            '끝나다': { meaning: '结束', pos: '动词' },
+            '좋다': { meaning: '好', pos: '形容词' },
+            '나쁘다': { meaning: '坏', pos: '形容词' },
+            '크다': { meaning: '大', pos: '形容词' },
+            '작다': { meaning: '小', pos: '形容词' },
+            '많다': { meaning: '多', pos: '形容词' },
+            '적다': { meaning: '少', pos: '形容词' },
+            '길다': { meaning: '长', pos: '形容词' },
+            '짧다': { meaning: '短', pos: '形容词' },
+            '빠르다': { meaning: '快', pos: '形容词' },
+            '느리다': { meaning: '慢', pos: '形容词' },
+            '쉽다': { meaning: '容易', pos: '形容词' },
+            '어렵다': { meaning: '难', pos: '形容词' },
+            '덥다': { meaning: '热', pos: '形容词' },
+            '춥다': { meaning: '冷', pos: '形容词' },
+            '아름답다': { meaning: '美丽', pos: '形容词' },
+            '예쁘다': { meaning: '漂亮', pos: '形容词' },
+            '재미있다': { meaning: '有趣', pos: '形容词' },
+            '슬프다': { meaning: '悲伤', pos: '形容词' },
+            '기쁘다': { meaning: '高兴', pos: '形容词' },
+            '바쁘다': { meaning: '忙', pos: '形容词' },
+            '아프다': { meaning: '疼', pos: '形容词' },
+            '같다': { meaning: '一样', pos: '形容词' },
+            '다르다': { meaning: '不同', pos: '形容词' },
+            '편하다': { meaning: '舒服', pos: '形容词' },
+            '너무': { meaning: '太', pos: '副词' },
+            '정말': { meaning: '真的', pos: '副词' },
+            '진짜': { meaning: '真的', pos: '副词' },
+            '아주': { meaning: '非常', pos: '副词' },
+            '조금': { meaning: '一点', pos: '副词' },
+            '많이': { meaning: '很多', pos: '副词' },
+            '잘': { meaning: '好地', pos: '副词' },
+            '못': { meaning: '不能', pos: '副词' },
+            '안': { meaning: '不', pos: '副词' },
+            '다시': { meaning: '再次', pos: '副词' },
+            '아직': { meaning: '还', pos: '副词' },
+            '항상': { meaning: '总是', pos: '副词' },
+            '자주': { meaning: '经常', pos: '副词' },
+            '가끔': { meaning: '偶尔', pos: '副词' },
+            '함께': { meaning: '一起', pos: '副词' },
+            '같이': { meaning: '一起', pos: '副词' },
+            '혼자': { meaning: '独自', pos: '副词' },
+            '꼭': { meaning: '一定', pos: '副词' },
+            '왜': { meaning: '为什么', pos: '副词' },
+            '어떻게': { meaning: '怎么', pos: '副词' }
+        };
+
+        function lookupDictionary(word) {
+            if (dictionary[word]) return dictionary[word];
+            
+            // 尝试去掉词尾
+            const stems = [
+                word.replace(/하다$/, ''),
+                word.replace(/다$/, ''),
+                word.replace(/은$|는$|을$|를$|이$|가$/, ''),
+                word.replace(/어$|아$|여$/, ''),
+                word.replace(/고$|서$|니$|면$/, '')
+            ];
+            
+            for (let stem of stems) {
+                if (dictionary[stem]) return dictionary[stem];
+            }
+            
+            // 特殊匹配
+            if (word === '있어') return dictionary['있다'];
+            if (word === '같이') return dictionary['같이'];
+            if (word === '가자') return { meaning: '走吧', pos: '动词' };
+            
+            return { meaning: '(词库待补充)', pos: '未知' };
+        }
+
+        // ==================== 韩文处理工具 ====================
+        const CHO = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+        const JUNG = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'];
+        const JONG = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+
+        function decompose(hangul) {
+            const code = hangul.charCodeAt(0) - 0xAC00;
+            if (code < 0 || code > 11171) return null;
+            const cho = Math.floor(code / 588);
+            const jung = Math.floor((code - cho * 588) / 28);
+            const jong = code % 28;
+            return { cho: CHO[cho], jung: JUNG[jung], jong: JONG[jong] };
+        }
+
+        function hasBatchim(char) {
+            const d = decompose(char);
+            return d ? d.jong !== '' : false;
+        }
+
+        function getBatchim(char) {
+            const d = decompose(char);
+            if (!d || !d.jong) return null;
+            const doubleMap = { 'ㄳ': 'ㄱ', 'ㄵ': 'ㄴ', 'ㄶ': 'ㄴ', 'ㄺ': 'ㄱ', 'ㄻ': 'ㅁ', 'ㄼ': 'ㄹ', 'ㄽ': 'ㄹ', 'ㄾ': 'ㄹ', 'ㄿ': 'ㅂ', 'ㅀ': 'ㄹ', 'ㅄ': 'ㅂ' };
+            return doubleMap[d.jong] || d.jong;
+        }
+
+        function endsWith(char, batchim) {
+            return getBatchim(char) === batchim;
+        }
+
+        function startsWith(char, target) {
+            const d = decompose(char);
+            if (!d) return false;
+            const vowels = JUNG;
+            if (vowels.includes(target)) {
+                return d.cho === 'ㅇ' && d.jung === target;
+            }
+            return d.cho === target;
+        }
+
+        // ==================== 音变规则 ====================
+        function applySoundChanges(text) {
+            const chars = text.split('');
+            const explanations = [];
+            
+            for (let i = 0; i < chars.length - 1; i++) {
+                const cur = chars[i];
+                const nxt = chars[i + 1];
+                
+                if (!decompose(cur) || !decompose(nxt)) continue;
+                
+                // 腭化
+                if (endsWith(cur, 'ㅌ') && startsWith(nxt, 'ㅣ')) {
+                    const d = decompose(cur);
+                    const newCur = String.fromCharCode(0xAC00 + CHO.indexOf(d.cho) * 588 + JUNG.indexOf(d.jung) * 28);
+                    chars[i] = newCur;
+                    chars[i + 1] = '치';
+                    explanations.push({
+                        original: cur + nxt,
+                        changed: newCur + '치',
+                        explanation: '「腭化现象」：收音 \'ㅌ\' 遇到元音 \'ㅣ\' 时，发音变为 \'ㅊ\'。'
+                    });
+                    continue;
+                }
+                
+                // 连读
+                if (hasBatchim(cur) && nxt === 'ㅇ') {
+                    const batchim = getBatchim(cur);
+                    const dCur = decompose(cur);
+                    const dNxt = decompose(nxt);
+                    const newCur = String.fromCharCode(0xAC00 + CHO.indexOf(dCur.cho) * 588 + JUNG.indexOf(dCur.jung) * 28);
+                    const newNxt = String.fromCharCode(0xAC00 + CHO.indexOf(batchim) * 588 + JUNG.indexOf(dNxt.jung) * 28);
+                    chars[i] = newCur;
+                    chars[i + 1] = newNxt;
+                    explanations.push({
+                        original: cur + nxt,
+                        changed: newCur + newNxt,
+                        explanation: `「连读」：代表零声母的 'ㅇ' 不发音，前面收音 '${batchim}' 移到后面连读。`
+                    });
+                    continue;
+                }
+                
+                // 紧音化
+                const batchim = getBatchim(cur);
+                const tightMap = { 'ㄱ': 'ㄲ', 'ㄷ': 'ㄸ', 'ㅂ': 'ㅃ', 'ㅅ': 'ㅆ', 'ㅈ': 'ㅉ' };
+                if (batchim && ['ㄱ', 'ㄷ', 'ㅂ'].includes(batchim) && tightMap[nxt[0]]) {
+                    const dNxt = decompose(nxt);
+                    const newNxt = String.fromCharCode(0xAC00 + CHO.indexOf(tightMap[nxt[0]]) * 588 + JUNG.indexOf(dNxt.jung) * 588 + (dNxt.jong ? JONG.indexOf(dNxt.jong) : 0));
+                    chars[i + 1] = newNxt;
+                    explanations.push({
+                        original: cur + nxt,
+                        changed: cur + newNxt,
+                        explanation: `「紧音化」：收音 '${batchim}' 后遇到 '${nxt[0]}'，变为紧音 '${tightMap[nxt[0]]}'。`
+                    });
+                }
+            }
+            
+            return {
+                text: chars.join(''),
+                explanations: explanations
+            };
+        }
+
+        // ==================== 分词器 ====================
+        const particles = ['은', '는', '이', '가', '을', '를', '에', '에서', '로', '으로', '와', '과', '의', '도', '만', '까지', '부터', '처럼'];
+        const endings = ['다', '요', '죠', '네', '군', '구나', '지', '고', '서', '니까', '면', '며', '지만', '자'];
+
+        function tokenize(text) {
+            const words = text.split(/\s+/);
+            const tokens = [];
+            
+            words.forEach(word => {
+                let matched = false;
+                
+                for (let p of particles) {
+                    if (word.endsWith(p) && word.length > p.length) {
+                        tokens.push({
+                            original: word,
+                            stem: word.slice(0, -p.length),
+                            particle: p,
+                            ending: null,
+                            type: 'noun+particle'
+                        });
+                        matched = true;
+                        break;
+                    }
+                }
+                
+                if (!matched) {
+                    for (let e of endings) {
+                        if (word.endsWith(e) && word.length > e.length) {
+                            tokens.push({
+                                original: word,
+                                stem: word.slice(0, -e.length),
+                                particle: null,
+                                ending: e,
+                                type: 'verb+ending'
+                            });
+                            matched = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!matched) {
+                    tokens.push({
+                        original: word,
+                        stem: word,
+                        particle: null,
+                        ending: null,
+                        type: 'word'
+                    });
+                }
+            });
+            
+            return tokens;
+        }
+
+        // ==================== 词频分析 ====================
+        function analyzeVocabulary(tokens) {
+            const freqMap = new Map();
+            const categoryMap = new Map();
+            
+            tokens.forEach(t => {
+                const word = t.stem;
+                freqMap.set(word, (freqMap.get(word) || 0) + 1);
+                
+                const pos = lookupDictionary(word).pos;
+                if (!categoryMap.has(pos)) categoryMap.set(pos, new Map());
+                const posMap = categoryMap.get(pos);
+                posMap.set(word, (posMap.get(word) || 0) + 1);
+            });
+            
+            return { freqMap, categoryMap };
+        }
+
+        function extractGrammar(tokens) {
+            const grammarFreq = new Map();
+            
+            tokens.forEach(t => {
+                if (t.ending) grammarFreq.set(t.ending, (grammarFreq.get(t.ending) || 0) + 1);
+                if (t.particle) grammarFreq.set(t.particle, (grammarFreq.get(t.particle) || 0) + 1);
+            });
+            
+            const explanations = {
+                '는': '主题助词，表示句子主题或对比',
+                '은': '主题助词，用于有收音的词后',
+                '가': '主格助词，表示主语',
+                '이': '主格助词，用于有收音的词后',
+                '를': '宾格助词，表示动作对象',
+                '을': '宾格助词，用于有收音的词后',
+                '에': '地点/时间助词',
+                '에서': '动作发生地点助词',
+                '요': '敬语终结词尾',
+                '다': '基本形终结词尾',
+                '고': '连接词尾，表示并列',
+                '지': '连接词尾，表示原因或确认',
+                '자': '共动式终结词尾，表示"一起做..."'
+            };
+            
+            return Array.from(grammarFreq.entries()).map(([g, count]) => ({
+                grammar: g,
+                count,
+                explanation: explanations[g] || '待补充'
+            }));
+        }
+
+        // ==================== 主程序 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            const lyricsInput = document.getElementById('lyricsInput');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const resultsSection = document.getElementById('resultsSection');
+            const sentenceContent = document.getElementById('sentenceContent');
+            const vocabularyContent = document.getElementById('vocabularyContent');
+            const grammarContent = document.getElementById('grammarContent');
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            const exampleBtns = document.querySelectorAll('.example-btn');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.dataset.tab;
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabPanels.forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(tabId + 'Panel').classList.add('active');
+                });
+            });
+
+            exampleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    lyricsInput.value = btn.dataset.lyric;
+                    analyzeLyrics();
+                });
+            });
+
+            analyzeBtn.addEventListener('click', analyzeLyrics);
+
+            function analyzeLyrics() {
+                const text = lyricsInput.value.trim();
+                if (!text) { alert('请输入韩语歌词'); return; }
+
+                const tokens = tokenize(text);
+                const soundResult = applySoundChanges(text);
+                const { freqMap, categoryMap } = analyzeVocabulary(tokens);
+                const grammarList = extractGrammar(tokens);
+
+                renderSentencePanel(tokens, soundResult);
+                renderVocabularyPanel(categoryMap, freqMap);
+                renderGrammarPanel(grammarList);
+
+                resultsSection.style.display = 'block';
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            function renderSentencePanel(tokens, soundResult) {
+                let html = `<div class="sentence-item">`;
+                html += `<div class="sentence-original">📝 原文：${tokens.map(t => t.original).join(' ')}</div>`;
+                html += `<div class="sentence-original" style="font-size: 1.1rem; color: #764ba2;">🔊 发音：${soundResult.text}</div>`;
+                html += `<div class="word-breakdown">`;
+                
+                tokens.forEach(t => {
+                    const word = t.stem;
+                    const dict = lookupDictionary(word);
+                    const pron = applySoundChanges(word).text;
+                    
+                    html += `<div class="word-card">`;
+                    html += `<span class="word-text">${word}</span>`;
+                    html += `<span class="word-pronunciation">[${pron}]</span>`;
+                    html += `<span style="display: block; font-size: 0.85rem; color: #666; margin-top: 4px;">${dict.meaning}</span>`;
+                    if (t.particle) html += `<span style="display: block; font-size: 0.8rem; color: #999;">+ ${t.particle} (助词)</span>`;
+                    if (t.ending) html += `<span style="display: block; font-size: 0.8rem; color: #999;">+ ${t.ending} (词尾)</span>`;
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+                
+                if (soundResult.explanations.length > 0) {
+                    html += `<div style="margin-top: 16px;"><h4 style="color: #333; margin-bottom: 12px;">🔬 音变现象解释：</h4>`;
+                    soundResult.explanations.forEach(exp => {
+                        html += `<div class="rule-explanation"><strong>${exp.original} → ${exp.changed}</strong><br>${exp.explanation}</div>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+                sentenceContent.innerHTML = html;
+            }
+
+            function renderVocabularyPanel(categoryMap, freqMap) {
+                let html = '';
+                const categoryNames = { '名词': '📦 名词', '动词': '🏃 动词', '形容词': '🎨 形容词', '副词': '⚡ 副词', '数词': '🔢 数词', '代词': '👤 代词', '未知': '📌 其他' };
+                
+                for (let [cat, name] of Object.entries(categoryNames)) {
+                    const wordMap = categoryMap.get(cat);
+                    if (!wordMap || wordMap.size === 0) continue;
+                    
+                    const sorted = Array.from(wordMap.entries()).sort((a, b) => b[1] - a[1]);
+                    
+                    html += `<div class="vocab-category"><h3>${name} (${sorted.length}个)</h3>`;
+                    html += `<table class="vocab-table"><thead><tr><th>韩语</th><th>发音</th><th>释义</th><th>次数</th></tr></thead><tbody>`;
+                    
+                    sorted.forEach(([w, c]) => {
+                        const dict = lookupDictionary(w);
+                        const pron = applySoundChanges(w).text;
+                        html += `<tr><td><strong>${w}</strong></td><td><span style="color:#764ba2;">[${pron}]</span></td><td>${dict.meaning}</td><td><span class="freq-badge">${c}次</span></td></tr>`;
+                    });
+                    
+                    html += `</tbody></table></div>`;
+                }
+                
+                vocabularyContent.innerHTML = html;
+            }
+
+            function renderGrammarPanel(grammarList) {
+                let html = '';
+                if (grammarList.length === 0) {
+                    html = `<p style="color:#999; text-align:center; padding:40px;">未识别到明显语法尾缀</p>`;
+                } else {
+                    html += `<table class="vocab-table"><thead><tr><th>语法/助词</th><th>次数</th><th>解释</th></tr></thead><tbody>`;
+                    grammarList.sort((a, b) => b.count - a.count).forEach(item => {
+                        html += `<tr><td><strong>${item.grammar}</strong></td><td><span class="freq-badge">${item.count}次</span></td><td>${item.explanation}</td></tr>`;
+                    });
+                    html += `</tbody></table>`;
+                }
+                grammarContent.innerHTML = html;
+            }
+
+            document.getElementById('downloadPdfBtn').addEventListener('click', () => {
+                window.print();
+            });
+        });
+    </script>
+</body>
+</html>
